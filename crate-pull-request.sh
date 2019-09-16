@@ -5,24 +5,39 @@ verifyIfHubIsInstalled(){
         echo "hub is not installed"  # 1>&2should output to stderr, not stdout
         echo "Installing hub.."  # 1>&2should output to stderr, not stdout
         brew install hub
+        brew install gnu-sed
     fi
 }
 
-getCurrentBranch(){
-    current_branch="$(git rev-parse --abbrev-ref HEAD)"
+importExtensions(){
+    for file in extensions/* ; do
+        source "./${file}"
+    done
 }
 
-getCommits(){
-    commits=()
-    while IFS= read -r line; do
-        commits+=( "$line" )
-    done < <( git log ${current_branch} ^origin/develop --oneline )
-}
 
+source ./config.sh
+source ./includes/git-handler.sh
+source ./includes/template-handler.sh
+source ./includes/pull-request-handler.sh
+
+importExtensions
 
 getCurrentBranch
 getCommits
+getModifiedFiles
 
-echo ${commits[@]}
+getPullRequestTemplate
+getTagsToReplace
+replaceTags
+
+echo "${pull_request_template}" >> pull_request_message.txt
+createPullRequest
+
+
+#echo "${files_modified[@]}"
+#echo "${features_added[@]}"
+#echo "${tagsToReplace}"
+#echo "$list[@]"
 
 #verifyIfHubIsInstalled
